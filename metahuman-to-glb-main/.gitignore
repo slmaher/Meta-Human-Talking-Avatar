@@ -1,0 +1,75 @@
+# Per-character working artifacts — rebuild locally by running the pipeline.
+# Patterns cover both the legacy flat layout (characters/<id>/...) and the
+# per-UE-version-per-pipeline layout (5.x/<pipeline>/characters/<id>/...).
+# These outputs are MetaHuman-licensed assets that can't ship under MIT.
+characters/*/01-fbx/
+characters/*/02-blend/
+characters/*/03-glb/
+characters/*/01-glb/
+*/*/characters/*/01-fbx/
+*/*/characters/*/02-blend/
+*/*/characters/*/03-glb/
+*/*/characters/*/01-glb/
+
+# Contributors running the pipeline on their own MetaHumans: ignore any
+# character folder that isn't one of the demo characters shipped in this repo.
+# Add your own id to the allowlist locally if you want to track it in a fork.
+characters/*
+!characters/_shared/
+!characters/_template/
+!characters/ada/
+!characters/taro/
+
+# Same allowlist for versioned roots.
+*/*/characters/*
+!*/*/characters/_shared/
+!*/*/characters/_template/
+!*/*/characters/ada/
+!*/*/characters/taro/
+
+# Stage 04 gallery output — same allowlist. A contributor's local viewer
+# still builds and renders fine; it just stays out of git.
+docs/characters/*
+!docs/characters/ada/
+!docs/characters/taro/
+*/*/docs/characters/*
+!*/*/docs/characters/ada/
+!*/*/docs/characters/taro/
+
+# Final GLB outputs in docs/ — MetaHuman-licensed, not MIT-shippable.
+docs/characters/*/*.glb
+*/*/docs/characters/*/*.glb
+
+# Python / tooling noise
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local config — paths to your UE project, UE editor, Blender. See
+# _config/pipeline.example.yaml for the template you copy from.
+/_config/pipeline.yaml
+
+# Blender scratch
+*.blend1
+*.blend@
+
+# Local screenshots (not part of the repo; keep the ones referenced from README)
+# ada-v3.png + ada-viewer.png are local dev captures — exclude by default
+/ada-v3.png
+/ada-viewer.png
+
+# Claude Code / MCP scratch dirs
+.claude/
+.playwright-mcp/
+
+# Exploratory / throwaway scripts + captures. Keep the reference baker
+# (_scratch/bake_arkit_reference.py) around locally — its output
+# skills/reference/arkit52_deltas.npz is the committed artifact.
+_scratch/

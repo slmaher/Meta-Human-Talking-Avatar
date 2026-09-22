@@ -1,0 +1,93 @@
+# CONTEXT.md — Pipeline Task Routing (Layer 1)
+
+## Goal
+
+Turn a UE MetaHuman into a web-ready GLB. Each UE version × pipeline type is a
+fully-isolated self-contained pipeline.
+
+## Pipeline roots
+
+| Path | What |
+|---|---|
+| `5.6/cinematic/` | UE 5.6 + Cinematic pipeline (the original shipped pipeline) |
+| `5.7/native-glb/` | UE 5.7 + Native-GLB pipeline (current default; ARKit blendshapes via Sequencer bake, smallest GLB output) |
+| `5.7/cinematic/` | UE 5.7 + Cinematic pipeline — **unfinished**, kept for reference; superseded by `native-glb` |
+
+Each pipeline root is fully self-contained:
+
+```
+<version>/<pipeline>/
+  CONTEXT.md               # pipeline-scoped task routing
+  stages/
+    01-metahuman-engine-export/
+      CONTEXT.md
+      tools/
+      references/
+    02-blender-setup/
+      CONTEXT.md
+      tools/
+      references/
+    03-export-to-glb/
+      CONTEXT.md
+      tools/
+    04-webview-build/
+      CONTEXT.md
+      tools/
+      templates/
+  characters/
+    _template/
+    _shared/
+    <id>/
+      manifest.json
+      source/
+      01-fbx/
+      02-blend/
+      03-glb/
+```
+
+**No cross-pipeline reach.** Stage 02 of 5.7-native-glb does not import from
+5.6-cinematic. Changes in one pipeline cannot affect another.
+
+## Workspace-wide (NOT per-pipeline)
+
+| Folder | Purpose |
+|---|---|
+| `_config/pipeline.yaml` | Global tool paths (blender_exe, per-version UE editor binaries) |
+| `skills/` | Reference material (MH asset layout, FBX rules) that applies across pipelines |
+| `docs/` | GitHub Pages output — stage 04 of each pipeline publishes its characters into `docs/characters/<id>/` |
+
+## Dispatch rules
+
+1. Pick the pipeline root: `<version>/<pipeline>/`.
+2. Read `<pipeline>/characters/<id>/manifest.json` → find first stage with `status != "done"`.
+3. Load **only** that stage's `CONTEXT.md` + files it names.
+4. Run the stage's launcher script. All paths are relative to the pipeline root.
+5. Validate outputs. Update the character's `manifest.json`. Loop.
+
+## Operator intents
+
+| Operator says | Do |
+|---|---|
+| "export `<asset_path>`" or "export `<id>`" | Read `5.7/native-glb/RUN.md` and follow it (bootstraps + runs all 5 stages with one Haiku per stage). |
+| "redo stage `<N>` for `<id>`" | Reset stage N's manifest block to `pending`, then spawn one Haiku for that stage using the sub-agent prompt template in `5.7/native-glb/RUN.md` step 3. |
+| "status of `<id>`" | Read `5.7/native-glb/characters/<id>/manifest.json`. |
+| "add character `<id>`" to `<pipeline>` (manual) | `python 5.7/native-glb/tools/bootstrap_character.py --id <id>`. |
+
+## Haiku spawn prompt (reference)
+
+```
+You are running stage <NN> for character <id> in pipeline <version>/<pipeline>.
+Read <version>/<pipeline>/stages/<NN>-*/CONTEXT.md for the contract.
+Read <version>/<pipeline>/characters/<id>/manifest.json for current state.
+Your tools are in <version>/<pipeline>/stages/<NN>-*/tools/ only.
+Do not reach outside the pipeline root.
+Execute the Process. Verify Outputs. Update manifest.json. Report.
+```
+
+## Active config
+
+`_config/pipeline.yaml`:
+- `active_pipeline` — default `<version>/<pipeline>` for single-char runs
+- `active_character` — default character id
+- `blender_exe` — path to blender.exe
+- `ue_by_version` — per-version UE project + editor paths (`5.6.1`, `5.7`)
